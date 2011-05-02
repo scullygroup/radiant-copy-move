@@ -5,7 +5,7 @@ module CopyMove
       test_page.parent = parent
       until test_page.valid?
         index = (index || 0) + 1
-        test_page.title = "#{title} (Copy#{' '+index if index > 1})"
+        test_page.title = "#{title} (Copy#{' ' + String(index) if index > 1})"
         test_page.slug = "#{slug}-#{index}"
       end
       {:slug => test_page.slug, :title => test_page.title}
@@ -17,6 +17,7 @@ module CopyMove
     end
 
     def copy_to(parent, status = nil)
+      raise CircularHierarchy.new(self) if parent == self || parent.ancestors.include?(self)
       parent.children.build(copiable_attributes.symbolize_keys.merge(new_slug_and_title_under(parent))).tap do |new_page|
         self.parts.each do |part|
           new_page.parts << part.clone
@@ -27,12 +28,14 @@ module CopyMove
     end
 
     def copy_with_children_to(parent, status = nil)
+      raise CircularHierarchy.new(self) if parent == self || parent.ancestors.include?(self)
       copy_to(parent, status).tap do |new_page|
         children.each {|child| child.copy_to(new_page, status) }
       end
     end
 
     def copy_tree_to(parent, status = nil)
+      raise CircularHierarchy.new(self) if parent == self || parent.ancestors.include?(self)
       copy_to(parent, status).tap do |new_page|
         children.each {|child| child.copy_tree_to(new_page, status) }
       end

@@ -14,17 +14,26 @@ module CopyMove
       @new_page = @page.copy_to(@parent, params[:status_id])
       flash[:notice] = "A copy of <strong>#{@page.title}</strong> was created under <strong>#{@parent.title}</strong>."
       redirect_to admin_pages_url
+    rescue CopyMove::CircularHierarchy => e
+      flash[:error] = e.message
+      redirect_to admin_pages_url
     end
 
     def copy_children
       @new_page = @page.copy_with_children_to(@parent, params[:status_id])
       flash[:notice] = "Copies of <strong>#{@page.title}</strong> and its immediate children were created under <strong>#{@parent.title}</strong>."
       redirect_to admin_pages_url
+    rescue CopyMove::CircularHierarchy => e
+      flash[:error] = e.message
+      redirect_to admin_pages_url
     end
 
     def copy_tree
       @new_page = @page.copy_tree_to(@parent, params[:status_id])
       flash[:notice] = "Copies of <strong>#{@page.title}</strong> and all its descendants were created under <strong>#{@parent.title}</strong>."
+      redirect_to admin_pages_url
+    rescue CopyMove::CircularHierarchy => e
+      flash[:error] = e.message
       redirect_to admin_pages_url
     end
 
